@@ -71,6 +71,14 @@ class ApiMockController extends Controller
             ]);
             $data = json_decode($res->getBody()->getContents(), true);
             return response()->json($data, $res->getStatusCode());
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $body = $response ? $response->getBody()->getContents() : null;
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage(),
+                'api_response' => $body
+            ], $response ? $response->getStatusCode() : 500);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Erro ao consultar API externa',

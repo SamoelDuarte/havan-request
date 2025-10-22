@@ -186,10 +186,18 @@ class ApiMockController extends Controller
                 ]
             ]);
             $data = json_decode($res->getBody()->getContents(), true);
+            // Se a resposta for o erro esperado, retorna JSON padronizado
+            if (is_array($data) && isset($data[0]['text']) && $data[0]['text'] === 'Nenhum acordo encontrado.') {
+                return response()->json(['mensagem' => 'nenhumacordo encontrado']);
+            }
             return response()->json($data, $res->getStatusCode());
         } catch (\GuzzleHttp\Exception\ClientException $e) {
             $response = $e->getResponse();
             $body = $response ? $response->getBody()->getContents() : null;
+            $data = json_decode($body, true);
+            if (is_array($data) && isset($data[0]['text']) && $data[0]['text'] === 'Nenhum acordo encontrado.') {
+                return response()->json(['mensagem' => 'nenhumacordo encontrado']);
+            }
             return response()->json([
                 'error' => 'Erro ao consultar API externa',
                 'message' => $e->getMessage(),

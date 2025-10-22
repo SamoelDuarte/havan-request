@@ -41,7 +41,7 @@ class ApiMockController extends Controller
         $curl = curl_init();
 
         // Configurações da requisição cURL
-    $clientId = env('HAVAN_CLIENT_ID');
+        $clientId = env('HAVAN_CLIENT_ID');
         $username = env('HAVAN_API_USERNAME');
         $password = env('HAVAN_API_PASSWORD');
         $postFields = 'grant_type=password&client_id=' . $clientId . '&username=' . $username . '&password=' . $password;
@@ -89,6 +89,11 @@ class ApiMockController extends Controller
         $chave = env('HAVAN_API_PASSWORD');
         $token = $this->gerarToken();
 
+        if (!is_numeric($codigoCarteiraCobranca) || intval($codigoCarteiraCobranca) <= 0) {
+            return response()->json([
+                'error' => 'O parâmetro "codigoCarteiraCobranca" deve ser um inteiro válido maior que zero.'
+            ], 400);
+        }
         if (!$codigoCarteiraCobranca) {
             return response()->json([
                 'error' => 'O parâmetro "codigoCarteiraCobranca" é obrigatório.'
@@ -101,7 +106,7 @@ class ApiMockController extends Controller
         }
 
         $body = [
-            'codigoCarteiraCobranca' => (int)$codigoCarteiraCobranca,
+            'codigoCarteiraCobranca' => (int) $codigoCarteiraCobranca,
             'usuario' => $usuario,
             'chave' => $chave
         ];

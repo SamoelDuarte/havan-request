@@ -41,18 +41,22 @@ class ApiMockController extends Controller
         $curl = curl_init();
 
         // Configurações da requisição cURL
+        $clientId = env('HAVAN_API_CLIENT_ID');
+        $username = env('HAVAN_API_USERNAME');
+        $password = env('HAVAN_API_PASSWORD');
+        $postFields = 'grant_type=password&client_id=' . $clientId . '&username=' . $username . '&password=' . $password;
         curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://cobrancaexternaauthapi.apps.havan.com.br/token', // URL do endpoint de autenticação
-            CURLOPT_RETURNTRANSFER => true, // Retorna a resposta como string
+            CURLOPT_URL => 'https://cobrancaexternaauthapi.apps.havan.com.br/token',
+            CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
             CURLOPT_TIMEOUT => 0,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST', // Tipo da requisição
-            CURLOPT_POSTFIELDS => 'grant_type=password&client_id=bd210e1b-dac2-49b0-a9c4-7c5e1b0b241f&username=THF&password=3cr1O35JfhQ8vBO', // Parâmetros do POST
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $postFields,
             CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/x-www-form-urlencoded' // Tipo de conteúdo
+                'Content-Type: application/x-www-form-urlencoded'
             ),
         ));
 

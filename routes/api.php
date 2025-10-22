@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HavanRequestController;
 use App\Http\Controllers\ApiMockController;
 
-Route::get('/digital', [ApiMockController::class, 'digital']);
+
 Route::get('/obter-clientes', [ApiMockController::class, 'obterClientes']);
 Route::get('/opcoes-parcelamento', [ApiMockController::class, 'opcoesParcelamento']);
 Route::post('/contratar-renegociacao', [ApiMockController::class, 'contratarRenegociacao']);
@@ -23,7 +23,6 @@ Route::post('/cancelar-renegociacao', [ApiMockController::class, 'cancelarRenego
 Route::get('/obter-pix-primeira-parcela', [ApiMockController::class, 'obterPixPrimeiraParcela']);
 Route::get('/obter-historico-ocorrencia-pessoa', [ApiMockController::class, 'obterHistoricoOcorrenciaPessoa']);
 Route::get('/obter-pix-documentos-aberto', [ApiMockController::class, 'obterPixDocumentosAberto']);
-Route::get('/cobranca-externa-operador', [ApiMockController::class, 'cobrancaExternaOperador']);
 Route::post('/cadastrar-operador', [ApiMockController::class, 'cadastrarOperador']);
 Route::get('/buscar-operador', [ApiMockController::class, 'buscarOperador']);
 Route::put('/atualizar-operador', [ApiMockController::class, 'atualizarOperador']);

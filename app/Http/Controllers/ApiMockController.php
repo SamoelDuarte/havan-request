@@ -101,7 +101,7 @@ class ApiMockController extends Controller
         }
 
         $body = [
-            'codigoCarteiraCobranca' => $codigoCarteiraCobranca,
+            'codigoCarteiraCobranca' => (int)$codigoCarteiraCobranca,
             'usuario' => $usuario,
             'chave' => $chave
         ];

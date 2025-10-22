@@ -82,8 +82,8 @@ class ApiMockController extends Controller
     public function obterStatusContato(Request $request): JsonResponse
     {
         $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
-        $usuario = 'THF';
-        $chave = '3cr1O35JfhQ8vBO';
+        $usuario = env('HAVAN_API_USERNAME');
+        $chave = env('HAVAN_API_PASSWORD');
         $token = $this->gerarToken();
 
         if (!$codigoCarteiraCobranca) {

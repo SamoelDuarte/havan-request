@@ -61,7 +61,7 @@ class ApiMockController extends Controller
 
         try {
             $client = new \GuzzleHttp\Client();
-            $res = $client->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExterna/ObterStat', [
+            $res = $client->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExterna/ObterStatusdeContato', [
                 'headers' => [
                     'Accept' => 'text/plain',
                     'Authorization' => 'Bearer ' . $token,

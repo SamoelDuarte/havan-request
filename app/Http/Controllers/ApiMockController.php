@@ -35,12 +35,56 @@ class ApiMockController extends Controller
     {
         return response()->json(['endpoint' => 'contratar-renegociacao-cobrancas-externas']);
     }
+    function gerarToken()
+    {
+        $clientId = env('HAVAN_API_CLIENT_ID');
+        $username = env('HAVAN_API_USERNAME');
+        $password = env('HAVAN_API_PASSWORD');
+
+        $postFields = http_build_query([
+            'grant_type' => 'password',
+            'client_id' => $clientId,
+            'username' => $username,
+            'password' => $password
+        ]);
+
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://cobrancaexternaauthapi.apps.havan.com.br/token',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $postFields,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/x-www-form-urlencoded'
+            ),
+        ));
+
+        $response = curl_exec($curl);
+        if ($response === false) {
+            echo 'Erro cURL: ' . curl_error($curl);
+            return null;
+        }
+        curl_close($curl);
+
+        $responseData = json_decode($response, true);
+        if (isset($responseData['access_token'])) {
+            return $responseData['access_token'];
+        } else {
+            echo 'Erro ao obter o token: ' . json_encode($responseData);
+            return null;
+        }
+    }
     public function obterStatusContato(Request $request): JsonResponse
     {
         $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
-        $usuario = env('HAVAN_API_USUARIO');
-        $chave = env('HAVAN_API_CHAVE');
-        $token = $request->bearerToken();
+        $usuario = 'THF';
+        $chave = '3cr1O35JfhQ8vBO';
+        $token = $this->gerarToken();
 
         if (!$codigoCarteiraCobranca) {
             return response()->json([
@@ -49,7 +93,7 @@ class ApiMockController extends Controller
         }
         if (!$token) {
             return response()->json([
-                'error' => 'Token de autenticação não informado.'
+                'error' => 'Token de autenticação não gerado.'
             ], 401);
         }
 

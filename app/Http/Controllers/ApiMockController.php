@@ -158,9 +158,49 @@ class ApiMockController extends Controller
     {
         return response()->json(['endpoint' => 'obter-boletos-base64']);
     }
-    public function obterAcordosPorCliente(): JsonResponse
+    public function obterAcordosPorCliente(Request $request): JsonResponse
     {
-        return response()->json(['endpoint' => 'obter-acordos-por-cliente']);
+        $codigoCliente = $request->input('codigoCliente');
+        $chave = env('HAVAN_API_PASSWORD');
+        $token = $this->gerarToken();
+
+        if (!is_numeric($codigoCliente) || intval($codigoCliente) <= 0) {
+            return response()->json([
+                'error' => 'O parâmetro "codigoCliente" deve ser um inteiro válido maior que zero.'
+            ], 400);
+        }
+        if (!$token) {
+            return response()->json([
+                'error' => 'Token de autenticação não gerado.'
+            ], 401);
+        }
+
+        $url = 'https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExterna/ObterAcordosPorCliente?codigoCliente=' . intval($codigoCliente) . '&chave=' . urlencode($chave);
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $res = $client->get($url, [
+                'headers' => [
+                    'Accept' => 'text/plain',
+                    'Authorization' => 'Bearer ' . $token,
+                ]
+            ]);
+            $data = json_decode($res->getBody()->getContents(), true);
+            return response()->json($data, $res->getStatusCode());
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $body = $response ? $response->getBody()->getContents() : null;
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage(),
+                'api_response' => $body
+            ], $response ? $response->getStatusCode() : 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
     public function cancelarRenegociacao(): JsonResponse
     {

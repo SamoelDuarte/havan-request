@@ -18,7 +18,7 @@ Route::get('/obter-remocao-clientes', [ApiMockController::class, 'obterRemocaoCl
 Route::get('/obter-documentos-quitados', [ApiMockController::class, 'obterDocumentosQuitados']);
 Route::get('/obter-documentos-aberto', [ApiMockController::class, 'obterDocumentosAberto']);
 Route::get('/obter-boletos-base64', [ApiMockController::class, 'obterBoletosBase64']);
-Route::get('/obter-acordos-por-cliente', [ApiMockController::class, 'obterAcordosPorCliente']);
+Route::post('/obter-acordos-por-cliente', [ApiMockController::class, 'obterAcordosPorCliente']);
 Route::post('/cancelar-renegociacao', [ApiMockController::class, 'cancelarRenegociacao']);
 Route::get('/obter-pix-primeira-parcela', [ApiMockController::class, 'obterPixPrimeiraParcela']);
 Route::get('/obter-historico-ocorrencia-pessoa', [ApiMockController::class, 'obterHistoricoOcorrenciaPessoa']);

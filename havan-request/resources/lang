@@ -1,0 +1,7 @@
+The directory `resources/lang` is typically used to store language files for localization in a Laravel project. Since you haven't specified any particular language or content for the language files, I will create an empty directory structure for you.
+
+Here is the content for the file:
+
+/havan-request/havan-request/resources/lang/.gitkeep
+
+# This file is intentionally left blank.

@@ -1,0 +1,25 @@
+The directory `/havan-request/havan-request/tests/Feature` is intended for feature tests in your Laravel application. Since you requested the contents for this directory, it is typically where you would place your test files. However, if you want to create a new test file, please specify the name of the test file you would like to create, or if you want to leave it empty, I can provide that as well. 
+
+For now, I will provide the contents for a typical test file named `ExampleTest.php` that you might want to include in the `Feature` directory.
+
+File: /havan-request/havan-request/tests/Feature/ExampleTest.php
+
+<?php
+
+namespace Tests\Feature;
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class ExampleTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /** @test */
+    public function it_loads_the_home_page()
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+    }
+}

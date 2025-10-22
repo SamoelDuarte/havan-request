@@ -1,0 +1,34 @@
+The directory `app/Exceptions` is typically used to define custom exception classes in a Laravel application. Since you requested the contents for this directory, I will create a default `Handler.php` file that is commonly found in this directory.
+
+Here are the contents for the file: 
+
+/ h avan-request / havan-request / app / Exceptions / Handler.php
+
+<?php
+
+namespace App\Exceptions;
+
+use Exception;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+
+class Handler extends ExceptionHandler
+{
+    protected $dontReport = [
+        // Add the exception types that you do not want to report
+    ];
+
+    protected $dontFlash = [
+        'password',
+        'password_confirmation',
+    ];
+
+    public function report(Exception $exception)
+    {
+        parent::report($exception);
+    }
+
+    public function render($request, Exception $exception)
+    {
+        return parent::render($request, $exception);
+    }
+}

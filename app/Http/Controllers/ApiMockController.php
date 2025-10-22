@@ -41,7 +41,7 @@ class ApiMockController extends Controller
         $curl = curl_init();
 
         // Configurações da requisição cURL
-        $clientId = env('HAVAN_API_CLIENT_ID');
+    $clientId = env('HAVAN_CLIENT_ID');
         $username = env('HAVAN_API_USERNAME');
         $password = env('HAVAN_API_PASSWORD');
         $postFields = 'grant_type=password&client_id=' . $clientId . '&username=' . $username . '&password=' . $password;

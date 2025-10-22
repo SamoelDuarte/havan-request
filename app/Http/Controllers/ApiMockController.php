@@ -78,7 +78,7 @@ class ApiMockController extends Controller
         if (isset($responseData['access_token'])) {
             return $responseData['access_token'];
         } else {
-            echo 'Erro ao obter o token: ' . $responseData;
+            echo 'Erro ao obter o token: ' . json_encode($responseData);
             return null;
         }
     }

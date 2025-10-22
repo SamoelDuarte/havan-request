@@ -12,7 +12,7 @@ Route::get('/contratar-renegociacao-tradicional', [ApiMockController::class, 'co
 Route::get('/obter-clientes-carteira', [ApiMockController::class, 'obterClientesCarteira']);
 Route::get('/obter-opcoes-parcelamento', [ApiMockController::class, 'obterOpcoesParcelamento']);
 Route::post('/contratar-renegociacao-cobrancas-externas', [ApiMockController::class, 'contratarRenegociacaoCobrancasExternas']);
-Route::get('/obter-status-contato', [ApiMockController::class, 'obterStatusContato']);
+Route::post('/obter-status-contato', [ApiMockController::class, 'obterStatusContato']);
 Route::post('/gravar-ocorrencia-terceirizadas', [ApiMockController::class, 'gravarOcorrenciaTerceirizadas']);
 Route::get('/obter-remocao-clientes', [ApiMockController::class, 'obterRemocaoClientes']);
 Route::get('/obter-documentos-quitados', [ApiMockController::class, 'obterDocumentosQuitados']);

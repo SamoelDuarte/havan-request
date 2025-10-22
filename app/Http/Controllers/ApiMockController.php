@@ -89,9 +89,9 @@ class ApiMockController extends Controller
         $chave = env('HAVAN_API_PASSWORD');
         $token = $this->gerarToken();
 
-        if (!$codigoCarteiraCobranca) {
+        if ($codigoCarteiraCobranca) {
             return response()->json([
-                'error' => 'O parâmetro "codigoCarteiraCobranca" é obrigatório.'
+                'error' => 'O parâmetro "codigoCarteiraCobranca" é obrigatório.'.$codigoCarteiraCobranca
             ], 400);
         }
         if (!$token) {

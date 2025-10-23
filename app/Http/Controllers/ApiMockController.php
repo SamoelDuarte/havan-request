@@ -65,7 +65,7 @@ class ApiMockController extends Controller
             'pessoaCpf' => $pessoaCpf,
             'dataPrimeiraParcela' => $dataPrimeiraParcela,
             'valorEntrada' => $valorEntrada,
-            'TipoSimulacao' => $tipoSimulacao,
+            'TipoSimulacao' => (int) $tipoSimulacao,
             'chave' => $chave
         ];
 

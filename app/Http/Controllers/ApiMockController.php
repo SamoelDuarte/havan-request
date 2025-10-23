@@ -152,13 +152,13 @@ class ApiMockController extends Controller
     }
     public function obterDocumentosAberto(Request $request): JsonResponse
     {
-        $pessoaCodigo = $request->input('pessoaCodigo');
+        $codigoCliente = $request->input('codigoCliente');
         $cpf = $request->input('cpf');
         $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
         $chave = env('HAVAN_API_PASSWORD');
         $token = $this->gerarToken();
 
-        if (!$cpf && !$pessoaCodigo) {
+        if (!$cpf && !$codigoCliente) {
             return response()->json([
                 'error' => 'Informe o CPF ou o código da pessoa.'
             ], 400);
@@ -170,7 +170,7 @@ class ApiMockController extends Controller
         }
 
         $body = [
-            'pessoaCodigo' => $pessoaCodigo,
+            'pessoaCodigo' => $codigoCliente,
             'cpf' => $cpf,
             'codigoCarteiraCobranca' => $codigoCarteiraCobranca,
             'chave' => $chave

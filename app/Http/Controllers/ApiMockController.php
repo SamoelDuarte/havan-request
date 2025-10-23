@@ -27,9 +27,82 @@ class ApiMockController extends Controller
     {
         return response()->json(['endpoint' => 'obter-clientes-carteira']);
     }
-    public function obterOpcoesParcelamento(): JsonResponse
+    public function obterOpcoesParcelamento(Request $request): JsonResponse
     {
-        return response()->json(['endpoint' => 'obter-opcoes-parcelamento']);
+        $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
+        $codigoUsuarioCarteira = $request->input('codigoUsuarioCarteira');
+        $pessoaCpf = $request->input('pessoaCpf');
+        $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');
+        $valorEntrada = $request->input('valorEntrada');
+        $tipoSimulacao = $request->input('TipoSimulacao');
+        $chave = env('HAVAN_API_PASSWORD');
+        $token = $this->gerarToken();
+
+        if (!is_numeric($codigoCarteiraCobranca) || intval($codigoCarteiraCobranca) <= 0) {
+            return response()->json([
+                'error' => 'O parâmetro "codigoCarteiraCobranca" deve ser um inteiro válido maior que zero.'
+            ], 400);
+        }
+        if (!is_numeric($codigoUsuarioCarteira) || intval($codigoUsuarioCarteira) <= 0) {
+            return response()->json([
+                'error' => 'O parâmetro "codigoUsuarioCarteira" deve ser um inteiro válido maior que zero.'
+            ], 400);
+        }
+        if (!$pessoaCpf || !$dataPrimeiraParcela || !$valorEntrada) {
+            return response()->json([
+                'error' => 'Os parâmetros "pessoaCpf", "dataPrimeiraParcela" e "valorEntrada" são obrigatórios.'
+            ], 400);
+        }
+        if (!$token) {
+            return response()->json([
+                'error' => 'Token de autenticação não gerado.'
+            ], 401);
+        }
+
+        $body = [
+            'codigoCarteiraCobranca' => (int) $codigoCarteiraCobranca,
+            'codigoUsuarioCarteira' => (int) $codigoUsuarioCarteira,
+            'pessoaCpf' => $pessoaCpf,
+            'dataPrimeiraParcela' => $dataPrimeiraParcela,
+            'valorEntrada' => $valorEntrada,
+            'TipoSimulacao' => $tipoSimulacao,
+            'chave' => $chave
+        ];
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $res = $client->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExternaDigital/ObterOpcoesParcelamento', [
+                'headers' => [
+                    'Accept' => 'text/plain',
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type' => 'application/json'
+                ],
+                'json' => $body
+            ]);
+            $data = json_decode($res->getBody()->getContents(), true);
+            // Se a resposta for o erro esperado, retorna JSON padronizado
+            if (is_array($data) && isset($data[0]['text']) && $data[0]['text'] === 'Nenhuma opção encontrada.') {
+                return response()->json(['mensagem' => 'nenhuma opção encontrada']);
+            }
+            return response()->json($data, $res->getStatusCode());
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $body = $response ? $response->getBody()->getContents() : null;
+            $data = json_decode($body, true);
+            if (is_array($data) && isset($data[0]['text']) && $data[0]['text'] === 'Nenhuma opção encontrada.') {
+                return response()->json(['mensagem' => 'nenhuma opção encontrada']);
+            }
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage(),
+                'api_response' => $body
+            ], $response ? $response->getStatusCode() : 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
     public function contratarRenegociacaoCobrancasExternas(): JsonResponse
     {

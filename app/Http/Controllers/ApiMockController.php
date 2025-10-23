@@ -150,9 +150,66 @@ class ApiMockController extends Controller
     {
         return response()->json(['endpoint' => 'obter-documentos-quitados']);
     }
-    public function obterDocumentosAberto(): JsonResponse
+    public function obterDocumentosAberto(Request $request): JsonResponse
     {
-        return response()->json(['endpoint' => 'obter-documentos-aberto']);
+        $pessoaCodigo = $request->input('pessoaCodigo');
+        $cpf = $request->input('cpf');
+        $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
+        $chave = env('HAVAN_API_PASSWORD');
+        $token = $this->gerarToken();
+
+        if (!$cpf && !$pessoaCodigo) {
+            return response()->json([
+                'error' => 'Informe o CPF ou o código da pessoa.'
+            ], 400);
+        }
+        if (!$token) {
+            return response()->json([
+                'error' => 'Token de autenticação não gerado.'
+            ], 401);
+        }
+
+        $body = [
+            'pessoaCodigo' => $pessoaCodigo,
+            'cpf' => $cpf,
+            'codigoCarteiraCobranca' => $codigoCarteiraCobranca,
+            'chave' => $chave
+        ];
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $res = $client->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExterna/ObterBoletosDocumentosEmAberto', [
+                'headers' => [
+                    'Accept' => 'text/plain',
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type' => 'application/json'
+                ],
+                'json' => $body
+            ]);
+            $data = json_decode($res->getBody()->getContents(), true);
+            // Se a resposta for o erro esperado, retorna JSON padronizado
+            if (is_array($data) && isset($data[0]['text']) && $data[0]['text'] === 'Nenhum boleto encontrado.') {
+                return response()->json(['mensagem' => 'nenhum boleto encontrado']);
+            }
+            return response()->json($data, $res->getStatusCode());
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $body = $response ? $response->getBody()->getContents() : null;
+            $data = json_decode($body, true);
+            if (is_array($data) && isset($data[0]['text']) && $data[0]['text'] === 'Nenhum boleto encontrado.') {
+                return response()->json(['mensagem' => 'nenhum boleto encontrado']);
+            }
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage(),
+                'api_response' => $body
+            ], $response ? $response->getStatusCode() : 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
     public function obterBoletosBase64(): JsonResponse
     {

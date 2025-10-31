@@ -397,7 +397,7 @@ class ApiMockController extends Controller
         $codigoCliente = $request->input('codigoCliente');
         $chave = env('HAVAN_API_PASSWORD');
         $token = $this->gerarToken();
-
+        dd('aqui');
         if (!is_numeric($codigoCliente) || intval($codigoCliente) <= 0) {
             return response()->json([
                 'error' => 'O parâmetro "codigoCliente" deve ser um inteiro válido maior que zero.'

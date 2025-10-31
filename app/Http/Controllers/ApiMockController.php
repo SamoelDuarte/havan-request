@@ -17,11 +17,79 @@ class ApiMockController extends Controller
     }
     public function contratarRenegociacao(): JsonResponse
     {
-        return response()->json(['endpoint' => 'contratar-renegociacao']);
-    }
-    public function contratarRenegociacaoTradicional(): JsonResponse
-    {
-        return response()->json(['endpoint' => 'contratar-renegociacao-tradicional']);
+        $request = request();
+        $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
+        $codigoUsuarioCarteiraCobranca = $request->input('codigoUsuarioCarteiraCobranca');
+        $gerarBoleto = $request->input('gerarBoleto');
+        $chave = env('HAVAN_API_PASSWORD');
+        $hash = $request->input('hash');
+        $token = $this->gerarToken();
+
+        if (!is_numeric($codigoCarteiraCobranca) || intval($codigoCarteiraCobranca) <= 0) {
+            return response()->json([
+                'error' => 'O parâmetro "codigoCarteiraCobranca" deve ser um inteiro válido maior que zero.'
+            ], 400);
+        }
+        if (!is_numeric($codigoUsuarioCarteiraCobranca) || intval($codigoUsuarioCarteiraCobranca) <= 0) {
+            return response()->json([
+                'error' => 'O parâmetro "codigoUsuarioCarteiraCobranca" deve ser um inteiro válido maior que zero.'
+            ], 400);
+        }
+        if ($gerarBoleto === null) {
+            return response()->json([
+                'error' => 'O parâmetro "gerarBoleto" é obrigatório.'
+            ], 400);
+        }
+        if (!$chave) {
+            return response()->json([
+                'error' => 'Chave não encontrada nas variáveis de ambiente.'
+            ], 400);
+        }
+        if (!$hash) {
+            return response()->json([
+                'error' => 'O parâmetro "hash" é obrigatório.'
+            ], 400);
+        }
+        if (!$token) {
+            return response()->json([
+                'error' => 'Token de autenticação não gerado.'
+            ], 401);
+        }
+
+        $body = [
+            'codigoCarteiraCobranca' => (int) $codigoCarteiraCobranca,
+            'codigoUsuarioCarteiraCobranca' => (int) $codigoUsuarioCarteiraCobranca,
+            'gerarBoleto' => $gerarBoleto,
+            'chave' => $chave,
+            'hash' => $hash
+        ];
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $res = $client->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExternaDigital/ContratarRenegociacao', [
+                'headers' => [
+                    'Accept' => 'text/plain',
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type' => 'application/json'
+                ],
+                'json' => $body
+            ]);
+            $data = json_decode($res->getBody()->getContents(), true);
+            return response()->json($data, $res->getStatusCode());
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $body = $response ? $response->getBody()->getContents() : null;
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage(),
+                'api_response' => $body
+            ], $response ? $response->getStatusCode() : 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
     public function obterClientesCarteira(): JsonResponse
     {
@@ -103,10 +171,6 @@ class ApiMockController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
-    }
-    public function contratarRenegociacaoCobrancasExternas(): JsonResponse
-    {
-        return response()->json(['endpoint' => 'contratar-renegociacao-cobrancas-externas']);
     }
     function gerarToken()
     {
@@ -284,9 +348,49 @@ class ApiMockController extends Controller
             ], 500);
         }
     }
-    public function obterBoletosBase64(): JsonResponse
+    public function obterBoletosBase64(Request $request): JsonResponse
     {
-        return response()->json(['endpoint' => 'obter-boletos-base64']);
+        $urlParam = $request->input('url');
+        $token = $this->gerarToken();
+
+        if (!$urlParam) {
+            return response()->json([
+                'error' => 'O parâmetro "url" é obrigatório.'
+            ], 400);
+        }
+        if (!$token) {
+            return response()->json([
+                'error' => 'Token de autenticação não gerado.'
+            ], 401);
+        }
+
+        $url = 'https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExterna/ObterBoletoBase64?url=' . urlencode($urlParam);
+
+        try {
+            $client = new \GuzzleHttp\Client();
+            $res = $client->get($url, [
+                'headers' => [
+                    'Accept' => 'text/plain',
+                    'Authorization' => 'Bearer ' . $token,
+                ]
+            ]);
+            $data = $res->getBody()->getContents();
+            // Se a resposta for uma string base64, retorna como campo base64
+            return response()->json(['base64' => $data], $res->getStatusCode());
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $body = $response ? $response->getBody()->getContents() : null;
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage(),
+                'api_response' => $body
+            ], $response ? $response->getStatusCode() : 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Erro ao consultar API externa',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
     public function obterAcordosPorCliente(Request $request): JsonResponse
     {

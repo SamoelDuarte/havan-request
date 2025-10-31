@@ -392,7 +392,7 @@ class ApiMockController extends Controller
             ], 500);
         }
     }
-    public function obterAcordosPorCliente(Request $request): JsonResponse
+    public function obterAcordosPorCliente(Request $request)
     {
         $codigoCliente = $request->input('codigoCliente');
         $chave = env('HAVAN_API_PASSWORD');

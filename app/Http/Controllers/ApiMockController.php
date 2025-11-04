@@ -95,6 +95,10 @@ class ApiMockController extends Controller
     {
         return response()->json(['endpoint' => 'obter-clientes-carteira']);
     }
+    public function contratarRenegociacaoTradicional(): JsonResponse
+    {
+        return response()->json(['endpoint' => 'contratar-renegociacao-tradicional']);
+    }
     public function obterOpcoesParcelamento(Request $request): JsonResponse
     {
         $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
@@ -102,6 +106,8 @@ class ApiMockController extends Controller
         $pessoaCodigo = $request->input('pessoaCodigo');
         $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');
         $valorEntrada = $request->input('valorEntrada');
+        $renegociaSomenteDocumentosEmAtraso = $request->input('renegociaSomenteDocumentosEmAtraso');
+        $renegociaSomenteDocumentosVencidos = $request->input('renegociaSomenteDocumentosVencidos');
         $tipoSimulacao = $request->input('TipoSimulacao');
         $chave = env('HAVAN_API_PASSWORD');
         $token = $this->gerarToken();
@@ -118,7 +124,17 @@ class ApiMockController extends Controller
         }
         if (!$pessoaCodigo || !$dataPrimeiraParcela || !$valorEntrada) {
             return response()->json([
-                'error' => 'Os parâmetros "pessoaCpf", "dataPrimeiraParcela" e "valorEntrada" são obrigatórios.'
+                'error' => 'Os parâmetros "pessoaCodigo", "dataPrimeiraParcela" e "valorEntrada" são obrigatórios.'
+            ], 400);
+        }
+        if ($renegociaSomenteDocumentosEmAtraso === null) {
+            return response()->json([
+                'error' => 'O parâmetro "renegociaSomenteDocumentosEmAtraso" é obrigatório.'
+            ], 400);
+        }
+        if (!is_bool($renegociaSomenteDocumentosEmAtraso)) {
+            return response()->json([
+                'error' => 'O parâmetro "renegociaSomenteDocumentosEmAtraso" deve ser um booleano.'
             ], 400);
         }
         if (!$token) {
@@ -133,6 +149,8 @@ class ApiMockController extends Controller
             'pessoaCodigo' => $pessoaCodigo,
             'dataPrimeiraParcela' => $dataPrimeiraParcela,
             'valorEntrada' => $valorEntrada,
+            'renegociaSomenteDocumentosEmAtraso' => (bool) $renegociaSomenteDocumentosEmAtraso,
+            'renegociaSomenteDocumentosVencidos' => $renegociaSomenteDocumentosVencidos !== null ? (bool) $renegociaSomenteDocumentosVencidos : null,
             'TipoSimulacao' => (int) $tipoSimulacao,
             'chave' => $chave
         ];

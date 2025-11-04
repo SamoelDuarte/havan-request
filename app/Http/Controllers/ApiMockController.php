@@ -122,11 +122,7 @@ class ApiMockController extends Controller
                 'error' => 'O parâmetro "codigoUsuarioCarteira" deve ser um inteiro válido maior que zero.'
             ], 400);
         }
-        if (!$pessoaCodigo || !$dataPrimeiraParcela || !$valorEntrada) {
-            return response()->json([
-                'error' => 'Os parâmetros "pessoaCodigo", "dataPrimeiraParcela" e "valorEntrada" são obrigatórios.'
-            ], 400);
-        }
+      
         if ($renegociaSomenteDocumentosEmAtraso === null) {
             return response()->json([
                 'error' => 'O parâmetro "renegociaSomenteDocumentosEmAtraso" é obrigatório.'

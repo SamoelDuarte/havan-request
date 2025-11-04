@@ -105,7 +105,6 @@ class ApiMockController extends Controller
         $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
         $pessoaCodigo = $request->input('pessoaCodigo');
         $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');
-        $valorEntrada = $request->input('valorEntrada');
         $renegociaSomenteDocumentosEmAtraso = $request->input('renegociaSomenteDocumentosEmAtraso');
         $renegociaSomenteDocumentosVencidos = $request->input('renegociaSomenteDocumentosVencidos');
         $tipoSimulacao = $request->input('TipoSimulacao');

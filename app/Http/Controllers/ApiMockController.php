@@ -105,7 +105,7 @@ class ApiMockController extends Controller
         $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
         $pessoaCodigo = $request->input('pessoaCodigo');
         $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');
-        $renegociaSomenteDocumentosEmAtraso = $request->input('renegociaSomenteDocumentosEmAtraso');
+      
         $renegociaSomenteDocumentosVencidos = $request->input('renegociaSomenteDocumentosVencidos');
         $tipoSimulacao = $request->input('TipoSimulacao');
         $chave = env('HAVAN_API_PASSWORD');
@@ -122,16 +122,7 @@ class ApiMockController extends Controller
             ], 400);
         }
       
-        if ($renegociaSomenteDocumentosEmAtraso === null) {
-            return response()->json([
-                'error' => 'O parâmetro "renegociaSomenteDocumentosEmAtraso" é obrigatório.'
-            ], 400);
-        }
-        if (!is_bool($renegociaSomenteDocumentosEmAtraso)) {
-            return response()->json([
-                'error' => 'O parâmetro "renegociaSomenteDocumentosEmAtraso" deve ser um booleano.'
-            ], 400);
-        }
+       
         if (!$token) {
             return response()->json([
                 'error' => 'Token de autenticação não gerado.'

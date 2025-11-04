@@ -99,7 +99,7 @@ class ApiMockController extends Controller
     {
         $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
         $codigoUsuarioCarteira = $request->input('codigoUsuarioCarteira');
-        $pessoaCpf = $request->input('pessoaCpf');
+        $pessoaCodigo = $request->input('pessoaCodigo');
         $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');
         $valorEntrada = $request->input('valorEntrada');
         $tipoSimulacao = $request->input('TipoSimulacao');
@@ -116,7 +116,7 @@ class ApiMockController extends Controller
                 'error' => 'O parâmetro "codigoUsuarioCarteira" deve ser um inteiro válido maior que zero.'
             ], 400);
         }
-        if (!$pessoaCpf || !$dataPrimeiraParcela || !$valorEntrada) {
+        if (!$pessoaCodigo || !$dataPrimeiraParcela || !$valorEntrada) {
             return response()->json([
                 'error' => 'Os parâmetros "pessoaCpf", "dataPrimeiraParcela" e "valorEntrada" são obrigatórios.'
             ], 400);
@@ -130,7 +130,7 @@ class ApiMockController extends Controller
         $body = [
             'codigoCarteiraCobranca' => (int) $codigoCarteiraCobranca,
             'codigoUsuarioCarteira' => (int) $codigoUsuarioCarteira,
-            'pessoaCpf' => $pessoaCpf,
+            'pessoaCodigo' => $pessoaCodigo,
             'dataPrimeiraParcela' => $dataPrimeiraParcela,
             'valorEntrada' => $valorEntrada,
             'TipoSimulacao' => (int) $tipoSimulacao,

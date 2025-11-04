@@ -150,10 +150,18 @@ class ApiMockController extends Controller
             'dataPrimeiraParcela' => $dataPrimeiraParcela,
             'valorEntrada' => $valorEntrada,
             'renegociaSomenteDocumentosEmAtraso' => (bool) $renegociaSomenteDocumentosEmAtraso,
-            'renegociaSomenteDocumentosVencidos' => $renegociaSomenteDocumentosVencidos !== null ? (bool) $renegociaSomenteDocumentosVencidos : null,
-            'TipoSimulacao' => (int) $tipoSimulacao,
             'chave' => $chave
         ];
+
+        // Adicionar renegociaSomenteDocumentosVencidos apenas se fornecido
+        if ($renegociaSomenteDocumentosVencidos !== null) {
+            $body['renegociaSomenteDocumentosVencidos'] = (bool) $renegociaSomenteDocumentosVencidos;
+        }
+
+        // Adicionar tipoSimulacao apenas se fornecido
+        if ($tipoSimulacao !== null) {
+            $body['TipoSimulacao'] = (int) $tipoSimulacao;
+        }
 
         try {
             $client = new \GuzzleHttp\Client();

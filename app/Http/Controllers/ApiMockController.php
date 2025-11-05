@@ -106,22 +106,9 @@ class ApiMockController extends Controller
         $pessoaCodigo = $request->input('pessoaCodigo');
         $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');
       
-        $renegociaSomenteDocumentosVencidos = $request->input('renegociaSomenteDocumentosVencidos');
-        $tipoSimulacao = $request->input('TipoSimulacao');
-        $chave = env('HAVAN_API_PASSWORD');
+         $chave = env('HAVAN_API_PASSWORD');
         $token = $this->gerarToken();
 
-        if (!is_numeric($codigoCarteiraCobranca) || intval($codigoCarteiraCobranca) <= 0) {
-            return response()->json([
-                'error' => 'O parâmetro "codigoCarteiraCobranca" deve ser um inteiro válido maior que zero.'
-            ], 400);
-        }
-        if (!is_numeric($codigoUsuarioCarteira) || intval($codigoUsuarioCarteira) <= 0) {
-            return response()->json([
-                'error' => 'O parâmetro "codigoUsuarioCarteira" deve ser um inteiro válido maior que zero.'
-            ], 400);
-        }
-      
        
         if (!$token) {
             return response()->json([
@@ -137,16 +124,7 @@ class ApiMockController extends Controller
             'valorEntrada' => 0,
             'chave' => $chave
         ];
-
-        // Adicionar renegociaSomenteDocumentosVencidos apenas se fornecido
-        if ($renegociaSomenteDocumentosVencidos !== null) {
-            $body['renegociaSomenteDocumentosVencidos'] = (bool) $renegociaSomenteDocumentosVencidos;
-        }
-
-        // Adicionar tipoSimulacao apenas se fornecido
-        if ($tipoSimulacao !== null) {
-            $body['TipoSimulacao'] = (int) $tipoSimulacao;
-        }
+       
 
         try {
             $client = new \GuzzleHttp\Client();

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Http;
 
 class ApiMockController extends Controller
 {
@@ -101,64 +102,97 @@ class ApiMockController extends Controller
     }
     public function obterOpcoesParcelamento(Request $request): JsonResponse
     {
-        $codigoUsuarioCarteiraCobranca = $request->input('codigoUsuarioCarteiraCobranca');
-        $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
-        $pessoaCodigo = $request->input('pessoaCodigo');
-        $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');
-      
-         $chave = env('HAVAN_API_PASSWORD');
-        $token = $this->gerarToken();
-
-       
-        if (!$token) {
-            return response()->json([
-                'error' => 'Token de autenticação não gerado.'
-            ], 401);
-        }
-
-        $body = [
-            'codigoUsuarioCarteiraCobranca' => (int) $codigoUsuarioCarteiraCobranca,
-            'codigoCarteiraCobranca' => (int) $codigoCarteiraCobranca,
-            'pessoaCodigo' => $pessoaCodigo,
-            'dataPrimeiraParcela' => $dataPrimeiraParcela,
-            'valorEntrada' => 0,
-            "renegociaSomenteDocumentosEmAtraso" => false,
-            'chave' => $chave
-        ];
-       
-
         try {
-            $client = new \GuzzleHttp\Client();
-            $res = $client->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExternaTradicional/ObterOpcoesParcelamento', [
-                'headers' => [
-                    'Accept' => 'text/plain',
-                    'Authorization' => 'Bearer ' . $token,
-                    'Content-Type' => 'application/json'
-                ],
-                'json' => $body
-            ]);
-            $data = json_decode($res->getBody()->getContents(), true);
-            // Se a resposta for o erro esperado, retorna JSON padronizado
-            if (is_array($data) && isset($data[0]['text']) && $data[0]['text'] === 'Nenhuma opção encontrada.') {
-                return response()->json(['mensagem' => 'nenhuma opção encontrada']);
+            $token = $this->gerarToken();
+            
+            if (!$token) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao obter token de autenticação'
+                ], 401);
             }
-            return response()->json($data, $res->getStatusCode());
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
-            $response = $e->getResponse();
-            $body = $response ? $response->getBody()->getContents() : null;
-            $data = json_decode($body, true);
-            if (is_array($data) && isset($data[0]['text']) && $data[0]['text'] === 'Nenhuma opção encontrada.') {
-                return response()->json(['mensagem' => 'nenhuma opção encontrada']);
+
+            // Preparar dados da requisição
+            $requestData = $request->all();
+            
+            // Adicionar chave se não estiver presente
+            if (!isset($requestData['chave'])) {
+                $requestData['chave'] = env('HAVAN_API_PASSWORD');
             }
+
+            // Validações obrigatórias
+            if (empty($requestData['codigoUsuarioCarteiraCobranca']) || empty($requestData['codigoCarteiraCobranca']) || 
+                empty($requestData['pessoaCodigo']) || empty($requestData['dataPrimeiraParcela'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Parâmetros obrigatórios faltando: codigoUsuarioCarteiraCobranca, codigoCarteiraCobranca, pessoaCodigo, dataPrimeiraParcela'
+                ], 400);
+            }
+
+            // Converter pessoaCodigo para inteiro (remove aspas simples se houver)
+            $requestData['pessoaCodigo'] = (int) str_replace("'", "", $requestData['pessoaCodigo']);
+            $requestData['codigoUsuarioCarteiraCobranca'] = (int) $requestData['codigoUsuarioCarteiraCobranca'];
+            $requestData['codigoCarteiraCobranca'] = (int) $requestData['codigoCarteiraCobranca'];
+
+            // Adicionar valorEntrada se não estiver presente (valor padrão 0)
+            if (!isset($requestData['valorEntrada'])) {
+                $requestData['valorEntrada'] = 0;
+            }
+
+            // Adicionar renegociaSomenteDocumentosEmAtraso se não estiver presente
+            if (!isset($requestData['renegociaSomenteDocumentosEmAtraso'])) {
+                $requestData['renegociaSomenteDocumentosEmAtraso'] = false;
+            }
+
+            // Fazer requisição para a API
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json'
+            ])
+            ->timeout(60)
+            ->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExternaTradicional/ObterOpcoesParcelamento', $requestData);
+
+            if ($response->successful()) {
+                $responseData = $response->json();
+                
+                // Se há múltiplas alçadas, pegar sempre a mais barata (menor valor à vista)
+                if (is_array($responseData) && count($responseData) > 1) {
+                    $alcadaMaisBarata = null;
+                    $menorValor = PHP_FLOAT_MAX;
+                    
+                    // Encontrar a alçada com menor valor à vista (1 parcela)
+                    foreach ($responseData as $alcada) {
+                        if (isset($alcada['parcelamento'][0]['valorTotal'])) {
+                            $valorAvista = $alcada['parcelamento'][0]['valorTotal'];
+                            if ($valorAvista < $menorValor) {
+                                $menorValor = $valorAvista;
+                                $alcadaMaisBarata = $alcada;
+                            }
+                        }
+                    }
+                    
+                    // Se encontrou a mais barata, usar ela; senão usar a última
+                    $alcadaSelecionada = $alcadaMaisBarata ?? end($responseData);
+                    $responseData = [$alcadaSelecionada];
+                }
+                
+                return response()->json([
+                    'success' => true,
+                    'data' => $responseData
+                ]);
+            }
+
             return response()->json([
-                'error' => 'Erro ao consultar API externa',
-                'message' => $e->getMessage(),
-                'api_response' => $body
-            ], $response ? $response->getStatusCode() : 500);
+                'success' => false,
+                'message' => 'Erro na API da Havan',
+                'details' => $response->json()
+            ], $response->status());
+
         } catch (\Exception $e) {
             return response()->json([
-                'error' => 'Erro ao consultar API externa',
-                'message' => $e->getMessage()
+                'success' => false,
+                'message' => 'Erro interno do servidor',
+                'error_details' => $e->getMessage()
             ], 500);
         }
     }

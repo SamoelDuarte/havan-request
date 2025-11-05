@@ -101,7 +101,7 @@ class ApiMockController extends Controller
     }
     public function obterOpcoesParcelamento(Request $request): JsonResponse
     {
-        $codigoUsuarioCarteira = $request->input('codigoUsuarioCarteira');
+        $codigoUsuarioCarteiraCobranca = $request->input('codigoUsuarioCarteiraCobranca');
         $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
         $pessoaCodigo = $request->input('pessoaCodigo');
         $dataPrimeiraParcela = $request->input('dataPrimeiraParcela');
@@ -117,11 +117,12 @@ class ApiMockController extends Controller
         }
 
         $body = [
-            'codigoUsuarioCarteiraCobranca' => (int) $codigoUsuarioCarteira,
+            'codigoUsuarioCarteiraCobranca' => (int) $codigoUsuarioCarteiraCobranca,
             'codigoCarteiraCobranca' => (int) $codigoCarteiraCobranca,
             'pessoaCodigo' => $pessoaCodigo,
             'dataPrimeiraParcela' => $dataPrimeiraParcela,
             'valorEntrada' => 0,
+            "renegociaSomenteDocumentosEmAtraso" => false,
             'chave' => $chave
         ];
        

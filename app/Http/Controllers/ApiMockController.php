@@ -129,8 +129,8 @@ class ApiMockController extends Controller
                 ], 400);
             }
 
-            // Converter pessoaCodigo para inteiro (remove aspas simples se houver)
-            $requestData['pessoaCodigo'] = (int) str_replace("'", "", $requestData['pessoaCodigo']);
+            // Converter pessoaCodigo para string (remove aspas simples se houver)
+            $requestData['pessoaCodigo'] = (string) str_replace("'", "", $requestData['pessoaCodigo']);
             $requestData['codigoUsuarioCarteiraCobranca'] = (int) $requestData['codigoUsuarioCarteiraCobranca'];
             $requestData['codigoCarteiraCobranca'] = (int) $requestData['codigoCarteiraCobranca'];
 

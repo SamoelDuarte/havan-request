@@ -144,6 +144,12 @@ class ApiMockController extends Controller
                 $requestData['renegociaSomenteDocumentosEmAtraso'] = false;
             }
 
+            \Log::info('[obterOpcoesParcelamento] Enviando requisição para API', [
+                'url' => 'https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExternaTradicional/ObterOpcoesParcelamento',
+                'token_length' => strlen($token),
+                'request_data' => $requestData
+            ]);
+
             // Fazer requisição para a API
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
@@ -151,6 +157,13 @@ class ApiMockController extends Controller
             ])
             ->timeout(60)
             ->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExternaTradicional/ObterOpcoesParcelamento', $requestData);
+
+            \Log::info('[obterOpcoesParcelamento] Resposta recebida', [
+                'http_status' => $response->status(),
+                'successful' => $response->successful(),
+                'response_body' => $response->body(),
+                'response_json' => $response->json()
+            ]);
 
             if ($response->successful()) {
                 $responseData = $response->json();
@@ -182,13 +195,28 @@ class ApiMockController extends Controller
                 ]);
             }
 
+            \Log::error('[obterOpcoesParcelamento] Erro na API da Havan', [
+                'http_status' => $response->status(),
+                'response_json' => $response->json(),
+                'response_body' => $response->body()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erro na API da Havan',
-                'details' => $response->json()
+                'details' => $response->json(),
+                'http_status' => $response->status(),
+                'response_body' => $response->body()
             ], $response->status());
 
         } catch (\Exception $e) {
+            \Log::error('[obterOpcoesParcelamento] Exceção', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Erro interno do servidor',

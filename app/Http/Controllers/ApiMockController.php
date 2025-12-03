@@ -205,7 +205,19 @@ class ApiMockController extends Controller
         $clientId = env('HAVAN_CLIENT_ID');
         $username = env('HAVAN_API_USERNAME');
         $password = env('HAVAN_API_PASSWORD');
+        
+        \Log::info('[gerarToken] Iniciando geração de token', [
+            'clientId' => $clientId,
+            'username' => $username,
+            'password_length' => strlen($password ?? '')
+        ]);
+        
         $postFields = 'grant_type=password&client_id=' . $clientId . '&username=' . $username . '&password=' . $password;
+        
+        \Log::debug('[gerarToken] Post Fields', [
+            'postFields' => $postFields
+        ]);
+        
         curl_setopt_array($curl, array(
             CURLOPT_URL => 'https://cobrancaexternaauthapi.apps.havan.com.br/token',
             CURLOPT_RETURNTRANSFER => true,
@@ -223,23 +235,58 @@ class ApiMockController extends Controller
 
         // Executa a requisição e captura a resposta
         $response = curl_exec($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($curl);
+        $curlErrno = curl_errno($curl);
 
         // Verifica se ocorreu erro na requisição cURL
         if ($response === false) {
-            echo 'Erro cURL: ' . curl_error($curl);
+            \Log::error('[gerarToken] Erro cURL', [
+                'error' => $curlError,
+                'errno' => $curlErrno,
+                'http_code' => $httpCode
+            ]);
+            curl_close($curl);
             return null;
         }
 
         // Fecha a sessão cURL
         curl_close($curl);
 
+        \Log::debug('[gerarToken] Resposta recebida', [
+            'http_code' => $httpCode,
+            'response_length' => strlen($response),
+            'response' => $response
+        ]);
+
         // Converte a resposta JSON para um array PHP
         $responseData = json_decode($response, true);
+        
+        // Verifica se há erro na decodificação JSON
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            \Log::error('[gerarToken] Erro ao decodificar JSON', [
+                'json_error' => json_last_error_msg(),
+                'response' => $response
+            ]);
+            return null;
+        }
+        
+        \Log::debug('[gerarToken] Resposta decodificada', [
+            'response_data' => $responseData
+        ]);
+        
         // Verifica se a resposta contém o token
         if (isset($responseData['access_token'])) {
+            \Log::info('[gerarToken] Token gerado com sucesso', [
+                'token_length' => strlen($responseData['access_token']),
+                'expires_in' => $responseData['expires_in'] ?? null
+            ]);
             return $responseData['access_token'];
         } else {
-            echo 'Erro ao obter o token: ' . json_encode($responseData);
+            \Log::error('[gerarToken] Erro ao obter o token', [
+                'response_data' => $responseData,
+                'http_code' => $httpCode
+            ]);
             return null;
         }
     }

@@ -104,7 +104,7 @@ class ApiMockController extends Controller
     {
         try {
             $token = $this->gerarToken();
-            
+
             if (!$token) {
                 return response()->json([
                     'success' => false,
@@ -114,15 +114,17 @@ class ApiMockController extends Controller
 
             // Preparar dados da requisição
             $requestData = $request->all();
-            
+
             // Adicionar chave se não estiver presente
             if (!isset($requestData['chave'])) {
                 $requestData['chave'] = env('HAVAN_API_PASSWORD');
             }
 
             // Validações obrigatórias
-            if (empty($requestData['codigoUsuarioCarteiraCobranca']) || empty($requestData['codigoCarteiraCobranca']) || 
-                empty($requestData['pessoaCodigo']) || empty($requestData['dataPrimeiraParcela'])) {
+            if (
+                empty($requestData['codigoUsuarioCarteiraCobranca']) || empty($requestData['codigoCarteiraCobranca']) ||
+                empty($requestData['pessoaCodigo']) || empty($requestData['dataPrimeiraParcela'])
+            ) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Parâmetros obrigatórios faltando: codigoUsuarioCarteiraCobranca, codigoCarteiraCobranca, pessoaCodigo, dataPrimeiraParcela'
@@ -155,8 +157,8 @@ class ApiMockController extends Controller
                 'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'application/json'
             ])
-            ->timeout(60)
-            ->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExternaTradicional/ObterOpcoesParcelamento', $requestData);
+                ->timeout(60)
+                ->post('https://cobrancaexternaapi.apps.havan.com.br/api/v3/CobrancaExternaTradicional/ObterOpcoesParcelamento', $requestData);
 
             \Log::info('[obterOpcoesParcelamento] Resposta recebida', [
                 'http_status' => $response->status(),
@@ -167,12 +169,12 @@ class ApiMockController extends Controller
 
             if ($response->successful()) {
                 $responseData = $response->json();
-                
+
                 // Se há múltiplas alçadas, pegar sempre a mais barata (menor valor à vista)
                 if (is_array($responseData) && count($responseData) > 1) {
                     $alcadaMaisBarata = null;
                     $menorValor = PHP_FLOAT_MAX;
-                    
+
                     // Encontrar a alçada com menor valor à vista (1 parcela)
                     foreach ($responseData as $alcada) {
                         if (isset($alcada['parcelamento'][0]['valorTotal'])) {
@@ -183,12 +185,12 @@ class ApiMockController extends Controller
                             }
                         }
                     }
-                    
+
                     // Se encontrou a mais barata, usar ela; senão usar a última
                     $alcadaSelecionada = $alcadaMaisBarata ?? end($responseData);
                     $responseData = [$alcadaSelecionada];
                 }
-                
+
                 return response()->json([
                     'success' => true,
                     'data' => $responseData
@@ -226,59 +228,65 @@ class ApiMockController extends Controller
     }
     function gerarToken()
     {
-        // Inicializa a sessão cURL
         $curl = curl_init();
 
-        // Configurações da requisição cURL
         $clientId = env('HAVAN_CLIENT_ID');
         $username = env('HAVAN_API_USERNAME');
         $password = env('HAVAN_API_PASSWORD');
-        
+
         \Log::info('[gerarToken] Iniciando geração de token', [
             'clientId' => $clientId,
             'username' => $username,
             'password_length' => strlen($password ?? '')
         ]);
-        
-        $postFields = 'grant_type=password&client_id=' . $clientId . '&username=' . $username . '&password=' . $password;
-        
+
+        $postFields = http_build_query([
+            'grant_type' => 'password',
+            'client_id' => $clientId,
+            'username' => $username,
+            'password' => $password
+        ]);
+
         \Log::debug('[gerarToken] Post Fields', [
             'postFields' => $postFields
         ]);
-        
-        curl_setopt_array($curl, array(
+
+        curl_setopt_array($curl, [
             CURLOPT_URL => 'https://cobrancaexternaauthapi.apps.havan.com.br/token',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
+            CURLOPT_TIMEOUT => 20,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
             CURLOPT_POSTFIELDS => $postFields,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/x-www-form-urlencoded'
-            ),
-        ));
 
-        // Executa a requisição e captura a resposta
+            // 🔥 IMPORTANTE: Cloudflare bloqueia requisições sem isso
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+
+            CURLOPT_HTTPHEADER => [
+                "Accept: application/json",
+                "Content-Type: application/x-www-form-urlencoded"
+            ],
+
+            // 🔥 Força IPv4 (Cloudflare estava te vendo como IPv6)
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+        ]);
+
         $response = curl_exec($curl);
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $curlError = curl_error($curl);
-        $curlErrno = curl_errno($curl);
 
-        // Verifica se ocorreu erro na requisição cURL
         if ($response === false) {
             \Log::error('[gerarToken] Erro cURL', [
                 'error' => $curlError,
-                'errno' => $curlErrno,
                 'http_code' => $httpCode
             ]);
             curl_close($curl);
             return null;
         }
 
-        // Fecha a sessão cURL
         curl_close($curl);
 
         \Log::debug('[gerarToken] Resposta recebida', [
@@ -287,10 +295,16 @@ class ApiMockController extends Controller
             'response' => $response
         ]);
 
-        // Converte a resposta JSON para um array PHP
+        // Se veio HTML, já retornamos erro diretamente
+        if (stripos($response, '<!DOCTYPE html>') !== false) {
+            \Log::error('[gerarToken] Cloudflare bloqueou a requisição', [
+                'http_code' => $httpCode
+            ]);
+            return null;
+        }
+
         $responseData = json_decode($response, true);
-        
-        // Verifica se há erro na decodificação JSON
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             \Log::error('[gerarToken] Erro ao decodificar JSON', [
                 'json_error' => json_last_error_msg(),
@@ -298,26 +312,27 @@ class ApiMockController extends Controller
             ]);
             return null;
         }
-        
+
         \Log::debug('[gerarToken] Resposta decodificada', [
             'response_data' => $responseData
         ]);
-        
-        // Verifica se a resposta contém o token
+
         if (isset($responseData['access_token'])) {
             \Log::info('[gerarToken] Token gerado com sucesso', [
                 'token_length' => strlen($responseData['access_token']),
                 'expires_in' => $responseData['expires_in'] ?? null
             ]);
             return $responseData['access_token'];
-        } else {
-            \Log::error('[gerarToken] Erro ao obter o token', [
-                'response_data' => $responseData,
-                'http_code' => $httpCode
-            ]);
-            return null;
         }
+
+        \Log::error('[gerarToken] Erro ao obter o token', [
+            'response_data' => $responseData,
+            'http_code' => $httpCode
+        ]);
+
+        return null;
     }
+
     public function obterStatusContato(Request $request): JsonResponse
     {
         $codigoCarteiraCobranca = $request->input('codigoCarteiraCobranca');
